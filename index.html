@@ -16,42 +16,46 @@
   #screen { flex: 1; position: relative; min-height: 0; background: #000; }
   canvas {
     display: block; width: 100%; height: 100%;
-    object-fit: contain; image-rendering: pixelated;
-    outline: none;
+    object-fit: contain; image-rendering: pixelated; outline: none;
+    background: #000;
   }
 
-  /* Boot gate. iOS will not start audio without a real user gesture, and
-     emscripten wants the canvas focused before it sees key events. */
   #boot {
     position: absolute; inset: 0; z-index: 20;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: #000; text-align: center; padding: 24px;
+    background: #000; text-align: center; padding: 20px;
   }
   #boot.hidden { display: none; }
   #bootTitle { font-size: 26px; font-weight: 800; letter-spacing: 0.18em; color: #b81b1b; }
-  #bootHint { margin-top: 10px; font-size: 13px; color: #7a7a7a; }
+  #bootHint { margin-top: 8px; font-size: 12px; color: #7a7a7a; }
   #bootBtn {
-    margin-top: 26px; border: 0; border-radius: 6px; padding: 14px 34px;
+    margin-top: 22px; border: 0; border-radius: 6px; padding: 14px 34px;
     background: #b81b1b; color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 0.1em;
   }
-  #status { margin-top: 18px; font-size: 12px; color: #6a6a6a; font-family: monospace; min-height: 1.2em; }
+  #bootBtn[disabled] { background: #3a2020; color: #8a8a8a; }
 
-  /* Controls */
+  /* Visible log. The whole point is that a failure is legible without a
+     desktop console — on a phone there is nowhere else for this to go. */
+  #log {
+    margin-top: 16px; width: 100%; max-width: 560px; height: 34vh; overflow: auto;
+    background: #0b0b0b; border: 1px solid #222; border-radius: 6px; padding: 8px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10px; line-height: 1.45;
+    color: #8fb98f; text-align: left; white-space: pre-wrap; word-break: break-word;
+  }
+  #log .e { color: #ff8f8f; }
+  #log .i { color: #6ea8ff; }
+
   #pad { flex: 0 0 auto; padding: 8px 10px 14px; background: #0a0a0a; }
+  #pad.hidden { display: none; }
   .row { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
   .btn {
     border: 0; border-radius: 10px; background: #1c1c1c; color: #d8d8d8;
-    font-size: 15px; font-weight: 600; height: 50px; min-width: 54px;
+    font-size: 15px; font-weight: 600; height: 50px; min-width: 52px;
     display: flex; align-items: center; justify-content: center; flex: 1;
   }
   .btn:active, .btn.on { background: #b81b1b; color: #fff; }
   .btn.wide { flex: 1.6; }
-  .btn.small { font-size: 12px; letter-spacing: 0.06em; }
-  #err {
-    display: none; margin: 8px 10px; padding: 10px; border-radius: 6px;
-    background: #2a1416; color: #ffb4b4; font-size: 11px; font-family: monospace;
-    white-space: pre-wrap; word-break: break-word; max-height: 22vh; overflow: auto;
-  }
+  .btn.small { font-size: 11px; letter-spacing: 0.05em; }
 </style>
 </head>
 <body>
@@ -61,33 +65,33 @@
     <div id="boot">
       <div id="bootTitle">DOOM</div>
       <div id="bootHint">Freedoom &middot; Chocolate Doom (WebAssembly)</div>
-      <button id="bootBtn" type="button">TAP TO START</button>
-      <div id="status">~35 MB on first load, then cached</div>
+      <button id="bootBtn" type="button" disabled>LOADING…</button>
+      <div id="log"></div>
     </div>
   </div>
 
-  <div id="pad">
+  <div id="pad" class="hidden">
     <div class="row">
       <button class="btn" data-key="ArrowLeft"  type="button">&#8630;</button>
       <button class="btn" data-key="ArrowUp"    type="button">&#9650;</button>
       <button class="btn" data-key="ArrowRight" type="button">&#8631;</button>
-      <button class="btn small" data-key="Comma"  type="button">&lt; STR</button>
-      <button class="btn small" data-key="Period" type="button">STR &gt;</button>
+      <button class="btn small" data-key="KeyQ" type="button">&lt; STR</button>
+      <button class="btn small" data-key="KeyE" type="button">STR &gt;</button>
     </div>
     <div class="row">
-      <button class="btn wide" data-key="Control" type="button">FIRE</button>
+      <button class="btn wide" data-key="Control"   type="button">FIRE</button>
       <button class="btn"      data-key="ArrowDown" type="button">&#9660;</button>
-      <button class="btn wide" data-key="Space"   type="button">USE</button>
+      <button class="btn wide" data-key="Space"     type="button">USE</button>
     </div>
     <div class="row">
       <button class="btn small" id="runToggle" type="button">RUN</button>
       <button class="btn small" data-key="Digit1" type="button">1</button>
       <button class="btn small" data-key="Digit2" type="button">2</button>
       <button class="btn small" data-key="Digit3" type="button">3</button>
+      <button class="btn small" data-key="Enter"  type="button">ENT</button>
       <button class="btn small" data-key="Escape" type="button">ESC</button>
     </div>
   </div>
-  <div id="err"></div>
 </div>
 
 <script>
@@ -97,74 +101,75 @@
   var canvas = document.getElementById('canvas');
   var boot = document.getElementById('boot');
   var bootBtn = document.getElementById('bootBtn');
-  var statusEl = document.getElementById('status');
-  var errEl = document.getElementById('err');
+  var pad = document.getElementById('pad');
+  var logEl = document.getElementById('log');
 
-  function fail(msg) {
-    errEl.style.display = 'block';
-    errEl.textContent = String(msg);
+  var lines = 0;
+  function log(msg, cls) {
+    if (lines++ > 400) { return; }
+    var d = document.createElement('div');
+    if (cls) { d.className = cls; }
+    d.textContent = msg;
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
   }
+  function info(m) { log(m, 'i'); }
+  function err(m) { log(m, 'e'); }
+
   window.onerror = function (message, src, line) {
-    fail('Error: ' + message + ' (line ' + line + ')');
+    err('EXCEPTION: ' + message + ' @' + line);
     return false;
   };
+  window.addEventListener('unhandledrejection', function (e) {
+    err('UNHANDLED REJECTION: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
 
-  // DOM key descriptors. SDL2-under-emscripten reads `code`/`keyCode`, so both
-  // are supplied — a synthesized event missing keyCode is ignored outright.
+  // ---- touch controls -------------------------------------------------
+  // Chocolate Doom reads DOM key events through SDL2; a synthesized event with
+  // no keyCode is dropped, so key/code/keyCode are all populated.
   var KEYS = {
-    ArrowUp:    { key: 'ArrowUp',    code: 'ArrowUp',      keyCode: 38 },
-    ArrowDown:  { key: 'ArrowDown',  code: 'ArrowDown',    keyCode: 40 },
-    ArrowLeft:  { key: 'ArrowLeft',  code: 'ArrowLeft',    keyCode: 37 },
-    ArrowRight: { key: 'ArrowRight', code: 'ArrowRight',   keyCode: 39 },
-    Control:    { key: 'Control',    code: 'ControlLeft',  keyCode: 17 },
-    Space:      { key: ' ',          code: 'Space',        keyCode: 32 },
-    Shift:      { key: 'Shift',      code: 'ShiftLeft',    keyCode: 16 },
-    Escape:     { key: 'Escape',     code: 'Escape',       keyCode: 27 },
-    Enter:      { key: 'Enter',      code: 'Enter',        keyCode: 13 },
-    Comma:      { key: ',',          code: 'Comma',        keyCode: 188 },
-    Period:     { key: '.',          code: 'Period',       keyCode: 190 },
-    Digit1:     { key: '1',          code: 'Digit1',       keyCode: 49 },
-    Digit2:     { key: '2',          code: 'Digit2',       keyCode: 50 },
-    Digit3:     { key: '3',          code: 'Digit3',       keyCode: 51 }
+    ArrowUp:    { key: 'ArrowUp',    code: 'ArrowUp',     keyCode: 38 },
+    ArrowDown:  { key: 'ArrowDown',  code: 'ArrowDown',   keyCode: 40 },
+    ArrowLeft:  { key: 'ArrowLeft',  code: 'ArrowLeft',   keyCode: 37 },
+    ArrowRight: { key: 'ArrowRight', code: 'ArrowRight',  keyCode: 39 },
+    Control:    { key: 'Control',    code: 'ControlLeft', keyCode: 17 },
+    Space:      { key: ' ',          code: 'Space',       keyCode: 32 },
+    Shift:      { key: 'Shift',      code: 'ShiftLeft',   keyCode: 16 },
+    Escape:     { key: 'Escape',     code: 'Escape',      keyCode: 27 },
+    Enter:      { key: 'Enter',      code: 'Enter',       keyCode: 13 },
+    KeyQ:       { key: 'q',          code: 'KeyQ',        keyCode: 81 },
+    KeyE:       { key: 'e',          code: 'KeyE',        keyCode: 69 },
+    Digit1:     { key: '1',          code: 'Digit1',      keyCode: 49 },
+    Digit2:     { key: '2',          code: 'Digit2',      keyCode: 50 },
+    Digit3:     { key: '3',          code: 'Digit3',      keyCode: 51 }
   };
 
   function send(type, name) {
     var k = KEYS[name];
     if (!k) { return; }
     var ev = new KeyboardEvent(type, {
-      key: k.key,
-      code: k.code,
-      keyCode: k.keyCode,
-      which: k.keyCode,
-      bubbles: true,
-      cancelable: true
+      key: k.key, code: k.code, keyCode: k.keyCode, which: k.keyCode,
+      bubbles: true, cancelable: true
     });
-    // Some builds read keyCode off the instance; the constructor drops it in
-    // several engines, so pin it back on explicitly.
     try {
       Object.defineProperty(ev, 'keyCode', { get: function () { return k.keyCode; } });
       Object.defineProperty(ev, 'which',   { get: function () { return k.keyCode; } });
-    } catch (e) { /* already correct on this engine */ }
-    (window.__doomKeyTarget || document).dispatchEvent(ev);
+    } catch (e) { /* engine already reports these correctly */ }
+    document.dispatchEvent(ev);
+    canvas.dispatchEvent(ev);
   }
 
-  // Hold-to-repeat: press on touchstart, release on touchend/cancel/leave, so a
-  // finger sliding off a button cannot leave a key stuck down forever.
   function bindHold(el, name) {
     var down = false;
     function press(ev) {
       ev.preventDefault();
       if (down) { return; }
-      down = true;
-      el.classList.add('on');
-      send('keydown', name);
+      down = true; el.classList.add('on'); send('keydown', name);
     }
     function release(ev) {
-      if (ev) { ev.preventDefault(); }
+      if (ev && ev.preventDefault) { ev.preventDefault(); }
       if (!down) { return; }
-      down = false;
-      el.classList.remove('on');
-      send('keyup', name);
+      down = false; el.classList.remove('on'); send('keyup', name);
     }
     el.addEventListener('touchstart', press, { passive: false });
     el.addEventListener('touchend', release, { passive: false });
@@ -172,16 +177,14 @@
     el.addEventListener('mousedown', press);
     el.addEventListener('mouseup', release);
     el.addEventListener('mouseleave', release);
-    // Losing the tab mid-hold would otherwise strand the key.
     window.addEventListener('blur', function () { release(null); });
   }
 
-  var buttons = document.querySelectorAll('.btn[data-key]');
-  for (var i = 0; i < buttons.length; i++) {
-    bindHold(buttons[i], buttons[i].getAttribute('data-key'));
+  var btns = document.querySelectorAll('.btn[data-key]');
+  for (var i = 0; i < btns.length; i++) {
+    bindHold(btns[i], btns[i].getAttribute('data-key'));
   }
 
-  // RUN is a latch, not a hold — nobody wants to keep a finger on shift.
   var runOn = false;
   var runToggle = document.getElementById('runToggle');
   runToggle.addEventListener('click', function () {
@@ -190,45 +193,89 @@
     send(runOn ? 'keydown' : 'keyup', 'Shift');
   });
 
-  function setStatus(t) { statusEl.textContent = t; }
+  // ---- emscripten module ----------------------------------------------
+  // Mirrors the upstream launcher's known-good sequence: never auto-run main,
+  // preload the data files as run-dependencies, then callMain() explicitly.
+  var PRELOAD = ['freedoom1.wad', 'default.cfg'];
+  var started = false;
 
   window.Module = {
     canvas: canvas,
-    arguments: ['-iwad', 'freedoom1.wad'],
-    noInitialRun: false,
-    print: function () {},
-    printErr: function () {},
-    setStatus: function (t) { if (t) { setStatus(t); } },
-    preRun: [
-      function () {
-        // Pull the WAD into emscripten's virtual FS before main() runs.
-        // Same-origin, so no CORS involved. addRunDependency is handled inside.
-        setStatus('loading freedoom1.wad …');
-        window.Module.FS_createPreloadedFile(
-          '/', 'freedoom1.wad', 'freedoom1.wad', true, false
-        );
-      }
-    ],
+    noInitialRun: true,
+    noExitRuntime: true,
+
+    print: function (t) { log(String(t)); },
+    printErr: function (t) { err(String(t)); },
+    setStatus: function (t) { if (t) { info('[status] ' + t); } },
+
+    monitorRunDependencies: function (left) {
+      info('[deps] remaining: ' + left);
+    },
+
+    preRun: function () {
+      try { window.Module.FS.mkdir('/savefiles'); } catch (e) { /* already exists */ }
+      PRELOAD.forEach(function (f) {
+        info('[preload] ' + f);
+        // parent "" + canOwn=true is what this build expects.
+        window.Module.FS.createPreloadedFile('', f, f, true, true);
+      });
+    },
+
     onRuntimeInitialized: function () {
-      setStatus('');
-      boot.classList.add('hidden');
+      info('[runtime] initialized');
+      try {
+        var found = window.Module.FS.readdir('/').join(' ');
+        info('[fs] /: ' + found);
+      } catch (e) { err('[fs] readdir failed: ' + e); }
+      bootBtn.disabled = false;
+      bootBtn.textContent = 'TAP TO START';
+    },
+
+    onExit: function (status) {
+      err('[exit] status ' + status);
     }
   };
 
   bootBtn.addEventListener('click', function () {
+    if (started) { return; }
+    started = true;
     bootBtn.disabled = true;
-    setStatus('starting …');
+    bootBtn.textContent = 'STARTING…';
+    info('[main] callMain');
 
-    // Emscripten's SDL2 attaches its key listeners to the canvas when it has
-    // focus; document is the reliable target for synthesized events.
-    window.__doomKeyTarget = document;
     canvas.focus();
 
-    var s = document.createElement('script');
-    s.src = 'websockets-doom.js';
-    s.onerror = function () { fail('Failed to load websockets-doom.js'); };
-    document.body.appendChild(s);
+    // Single-player only. The upstream launcher also passes -servername /
+    // -autojoin for its WebSockets multiplayer; those make the client look for
+    // a game server, which is not wanted here.
+    var args = [
+      '-iwad', 'freedoom1.wad',
+      '-window',
+      '-nogui',
+      '-nomusic',
+      '-config', 'default.cfg',
+      '-savedir', '/savefiles'
+    ];
+
+    try {
+      // eslint-disable-next-line no-undef
+      callMain(args);
+      info('[main] returned');
+      boot.classList.add('hidden');
+      pad.classList.remove('hidden');
+    } catch (e) {
+      err('[main] threw: ' + (e && e.message ? e.message : e));
+      bootBtn.disabled = false;
+      bootBtn.textContent = 'RETRY';
+      started = false;
+    }
   });
+
+  info('[boot] loading engine…');
+  var s = document.createElement('script');
+  s.src = 'websockets-doom.js';
+  s.onerror = function () { err('[boot] failed to load websockets-doom.js'); };
+  document.body.appendChild(s);
 })();
 </script>
 </body>

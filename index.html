@@ -1,3 +1,4 @@
+ 
 <!doctype html>
 <html lang="en">
 <head>
@@ -34,8 +35,6 @@
   }
   #bootBtn[disabled] { background: #3a2020; color: #8a8a8a; }
 
-  /* Visible log. The whole point is that a failure is legible without a
-     desktop console — on a phone there is nowhere else for this to go. */
   #log {
     margin-top: 16px; width: 100%; max-width: 560px; height: 34vh; overflow: auto;
     background: #0b0b0b; border: 1px solid #222; border-radius: 6px; padding: 8px;
@@ -72,23 +71,23 @@
 
   <div id="pad" class="hidden">
     <div class="row">
-      <button class="btn" data-key="ArrowLeft"  type="button">&#8630;</button>
-      <button class="btn" data-key="ArrowUp"    type="button">&#9650;</button>
+      <button class="btn" data-key="ArrowLeft" type="button">&#8630;</button>
+      <button class="btn" data-key="ArrowUp" type="button">&#9650;</button>
       <button class="btn" data-key="ArrowRight" type="button">&#8631;</button>
       <button class="btn small" data-key="KeyQ" type="button">&lt; STR</button>
       <button class="btn small" data-key="KeyE" type="button">STR &gt;</button>
     </div>
     <div class="row">
-      <button class="btn wide" data-key="Control"   type="button">FIRE</button>
-      <button class="btn"      data-key="ArrowDown" type="button">&#9660;</button>
-      <button class="btn wide" data-key="Space"     type="button">USE</button>
+      <button class="btn wide" data-key="Control" type="button">FIRE</button>
+      <button class="btn" data-key="ArrowDown" type="button">&#9660;</button>
+      <button class="btn wide" data-key="Space" type="button">USE</button>
     </div>
     <div class="row">
       <button class="btn small" id="runToggle" type="button">RUN</button>
       <button class="btn small" data-key="Digit1" type="button">1</button>
       <button class="btn small" data-key="Digit2" type="button">2</button>
       <button class="btn small" data-key="Digit3" type="button">3</button>
-      <button class="btn small" data-key="Enter"  type="button">ENT</button>
+      <button class="btn small" data-key="Enter" type="button">ENT</button>
       <button class="btn small" data-key="Escape" type="button">ESC</button>
     </div>
   </div>
@@ -124,24 +123,41 @@
     err('UNHANDLED REJECTION: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
   });
 
-  // ---- touch controls -------------------------------------------------
-  // Chocolate Doom reads DOM key events through SDL2; a synthesized event with
-  // no keyCode is dropped, so key/code/keyCode are all populated.
+  var rCount = 0;
+  var rTimer = null;
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key.toLowerCase() !== 'r' || e.repeat) return;
+
+    rCount++;
+    clearTimeout(rTimer);
+
+    rTimer = setTimeout(function () {
+      rCount = 0;
+    }, 700);
+
+    if (rCount >= 3) {
+      rCount = 0;
+      window.location.href =
+        'https://makkapakka-7788.github.io/MAKKASENTPAKKING-portfolio/index.html?games=true';
+    }
+  });
+
   var KEYS = {
-    ArrowUp:    { key: 'ArrowUp',    code: 'ArrowUp',     keyCode: 38 },
-    ArrowDown:  { key: 'ArrowDown',  code: 'ArrowDown',   keyCode: 40 },
-    ArrowLeft:  { key: 'ArrowLeft',  code: 'ArrowLeft',   keyCode: 37 },
-    ArrowRight: { key: 'ArrowRight', code: 'ArrowRight',  keyCode: 39 },
-    Control:    { key: 'Control',    code: 'ControlLeft', keyCode: 17 },
-    Space:      { key: ' ',          code: 'Space',       keyCode: 32 },
-    Shift:      { key: 'Shift',      code: 'ShiftLeft',   keyCode: 16 },
-    Escape:     { key: 'Escape',     code: 'Escape',      keyCode: 27 },
-    Enter:      { key: 'Enter',      code: 'Enter',       keyCode: 13 },
-    KeyQ:       { key: 'q',          code: 'KeyQ',        keyCode: 81 },
-    KeyE:       { key: 'e',          code: 'KeyE',        keyCode: 69 },
-    Digit1:     { key: '1',          code: 'Digit1',      keyCode: 49 },
-    Digit2:     { key: '2',          code: 'Digit2',      keyCode: 50 },
-    Digit3:     { key: '3',          code: 'Digit3',      keyCode: 51 }
+    ArrowUp: { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
+    ArrowDown: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
+    ArrowLeft: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
+    ArrowRight: { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 },
+    Control: { key: 'Control', code: 'ControlLeft', keyCode: 17 },
+    Space: { key: ' ', code: 'Space', keyCode: 32 },
+    Shift: { key: 'Shift', code: 'ShiftLeft', keyCode: 16 },
+    Escape: { key: 'Escape', code: 'Escape', keyCode: 27 },
+    Enter: { key: 'Enter', code: 'Enter', keyCode: 13 },
+    KeyQ: { key: 'q', code: 'KeyQ', keyCode: 81 },
+    KeyE: { key: 'e', code: 'KeyE', keyCode: 69 },
+    Digit1: { key: '1', code: 'Digit1', keyCode: 49 },
+    Digit2: { key: '2', code: 'Digit2', keyCode: 50 },
+    Digit3: { key: '3', code: 'Digit3', keyCode: 51 }
   };
 
   function send(type, name) {
@@ -153,8 +169,8 @@
     });
     try {
       Object.defineProperty(ev, 'keyCode', { get: function () { return k.keyCode; } });
-      Object.defineProperty(ev, 'which',   { get: function () { return k.keyCode; } });
-    } catch (e) { /* engine already reports these correctly */ }
+      Object.defineProperty(ev, 'which', { get: function () { return k.keyCode; } });
+    } catch (e) {}
     document.dispatchEvent(ev);
     canvas.dispatchEvent(ev);
   }
@@ -193,9 +209,6 @@
     send(runOn ? 'keydown' : 'keyup', 'Shift');
   });
 
-  // ---- emscripten module ----------------------------------------------
-  // Mirrors the upstream launcher's known-good sequence: never auto-run main,
-  // preload the data files as run-dependencies, then callMain() explicitly.
   var PRELOAD = ['freedoom1.wad', 'default.cfg'];
   var started = false;
 
@@ -213,10 +226,9 @@
     },
 
     preRun: function () {
-      try { window.Module.FS.mkdir('/savefiles'); } catch (e) { /* already exists */ }
+      try { window.Module.FS.mkdir('/savefiles'); } catch (e) {}
       PRELOAD.forEach(function (f) {
         info('[preload] ' + f);
-        // parent "" + canOwn=true is what this build expects.
         window.Module.FS.createPreloadedFile('', f, f, true, true);
       });
     },
@@ -245,9 +257,6 @@
 
     canvas.focus();
 
-    // Single-player only. The upstream launcher also passes -servername /
-    // -autojoin for its WebSockets multiplayer; those make the client look for
-    // a game server, which is not wanted here.
     var args = [
       '-iwad', 'freedoom1.wad',
       '-window',
@@ -258,7 +267,6 @@
     ];
 
     try {
-      // eslint-disable-next-line no-undef
       callMain(args);
       info('[main] returned');
       boot.classList.add('hidden');

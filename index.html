@@ -1,50 +1,7 @@
  
 <!doctype html>
 <html lang="en">
-<head><script id="flashcard-startup-gate">
-(function(){
-  function init(){
-    var form=document.getElementById("flashcard-repo-lock-form");
-    var overlay=document.getElementById("flashcard-repo-lock");
-    if(!form||!overlay)return;
-    var input=document.getElementById("flashcard-repo-lock-input");
-    var error=document.getElementById("flashcard-repo-lock-error");
-    form.addEventListener("submit",function(e){
-      e.preventDefault();
-      if(input.value!=="pness"){error.textContent="Incorrect password. Try again.";input.select();return;}
-      form.querySelectorAll("input,button").forEach(function(el){el.disabled=true;});
-      error.textContent="UNLOCKING...";
-      var blocked=Array.from(document.querySelectorAll('script[type="application/x-flashcard-locked"]'));
-      overlay.remove();
-      (async function(){
-        for(var old of blocked){
-          var s=document.createElement("script");
-          Array.from(old.attributes).forEach(function(a){
-            if(a.name==="type"||a.name==="data-flashcard-type"||a.name==="data-flashcard-async"||a.name==="data-flashcard-defer")return;
-            s.setAttribute(a.name,a.value);
-          });
-          var originalType=old.getAttribute("data-flashcard-type");
-          if(originalType)s.type=originalType;
-          if(old.hasAttribute("data-flashcard-async"))s.async=true;else s.async=false;
-          if(old.hasAttribute("data-flashcard-defer"))s.defer=true;
-          if(old.src){
-            await new Promise(function(resolve){
-              s.onload=resolve;s.onerror=resolve;
-              (document.body||document.head).appendChild(s);
-            });
-          }else{
-            s.textContent=old.textContent;
-            (document.body||document.head).appendChild(s);
-          }
-          old.remove();
-        }
-      })();
-    });
-    input.focus();
-  }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
-})();
-</script>
+<head><script id="flashcard-startup-gate">(function(){function init(){var form=document.getElementById("flashcard-repo-lock-form"),overlay=document.getElementById("flashcard-repo-lock");if(!form||!overlay)return;var input=document.getElementById("flashcard-repo-lock-input"),error=document.getElementById("flashcard-repo-lock-error");form.addEventListener("submit",function(e){e.preventDefault();if(input.value!=="pness"){error.textContent="Incorrect password. Try again.";input.select();return;}var blocked=Array.from(document.querySelectorAll('script[type="application/x-flashcard-locked"]'));overlay.remove();(async function(){for(var old of blocked){var s=document.createElement("script");Array.from(old.attributes).forEach(function(a){if(["type","data-flashcard-type","data-flashcard-async","data-flashcard-defer"].includes(a.name))return;s.setAttribute(a.name,a.value);});var t=old.getAttribute("data-flashcard-type");if(t)s.type=t;s.async=old.hasAttribute("data-flashcard-async");if(old.hasAttribute("data-flashcard-defer"))s.defer=true;if(old.src){await new Promise(function(resolve){s.onload=resolve;s.onerror=resolve;(document.body||document.head).appendChild(s);});}else{s.textContent=old.textContent;(document.body||document.head).appendChild(s);}old.remove();}})();});input.focus();}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <title>flashcard.com)</title>
@@ -100,6 +57,291 @@
   .btn.small { font-size: 11px; letter-spacing: 0.05em; }
 </style>
 
+<script type="application/x-flashcard-locked" data-flashcard-type="">
+/* MakkaPakka RRR home shortcut */
+(function () {
+  let rrrTapCount = 0;
+  let rrrResetTimer = null;
 
+  window.addEventListener("keydown", function (event) {
+    if (!event.key || event.key.toLowerCase() !== "r") {
+      if (!event.repeat) {
+        rrrTapCount = 0;
+        clearTimeout(rrrResetTimer);
+      }
+      return;
+    }
+
+    const target = event.target;
+    if ((target instanceof Element && target.closest("input, textarea, select, [contenteditable='true'], [contenteditable='']")) ||
+        event.ctrlKey || event.altKey || event.metaKey) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (event.repeat) return;
+
+    rrrTapCount += 1;
+    clearTimeout(rrrResetTimer);
+
+    if (rrrTapCount === 3) {
+      rrrTapCount = 0;
+      window.location.href = "https://makkapakka-7788.github.io/makkapakka/flashcard.html";
+      return;
+    }
+
+    rrrResetTimer = setTimeout(function () {
+      rrrTapCount = 0;
+    }, 850);
+  }, true);
+})();
+</script>
+<style id="flashcard-repo-lock-style">
+#flashcard-repo-lock{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:20px;background:#080808;color:#eee;font-family:"Courier New",monospace}
+#flashcard-repo-lock *{box-sizing:border-box}
+#flashcard-repo-lock .lock-card{width:min(390px,100%);padding:30px;background:#101010;border:2px solid #555;text-align:center;box-shadow:0 12px 50px #000}
+#flashcard-repo-lock h1{font-size:24px;margin:0 0 12px}
+#flashcard-repo-lock p{color:#999;font-size:13px}
+#flashcard-repo-lock input{width:100%;margin:14px 0;padding:13px;background:#080808;border:1px solid #555;color:#eee;font:inherit}
+#flashcard-repo-lock button{width:100%;padding:12px;background:#eee;border:0;color:#111;font:bold 14px "Courier New",monospace;cursor:pointer}
+#flashcard-repo-lock .lock-error{min-height:18px;color:#ff7777}
+</style>
+</head>
+<body>
+<div id="flashcard-repo-lock" role="dialog" aria-modal="true" aria-labelledby="flashcard-repo-lock-title"><form class="lock-card" id="flashcard-repo-lock-form"><h1 id="flashcard-repo-lock-title">PASSWORD REQUIRED</h1><p>Enter the password to access this game.</p><input id="flashcard-repo-lock-input" type="password" placeholder="Enter password" autocomplete="off" required><p class="lock-error" id="flashcard-repo-lock-error" aria-live="polite"></p><button type="submit">UNLOCK GAME</button></form></div>
+<div id="wrap">
+  <div id="screen">
+    <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+    <div id="boot">
+      <div id="bootTitle">DOOM</div>
+      <div id="bootHint">Freedoom &middot; Chocolate Doom (WebAssembly)</div>
+      <button id="bootBtn" type="button" disabled>LOADING…</button>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <div id="pad" class="hidden">
+    <div class="row">
+      <button class="btn" data-key="ArrowLeft" type="button">&#8630;</button>
+      <button class="btn" data-key="ArrowUp" type="button">&#9650;</button>
+      <button class="btn" data-key="ArrowRight" type="button">&#8631;</button>
+      <button class="btn small" data-key="KeyQ" type="button">&lt; STR</button>
+      <button class="btn small" data-key="KeyE" type="button">STR &gt;</button>
+    </div>
+    <div class="row">
+      <button class="btn wide" data-key="Control" type="button">FIRE</button>
+      <button class="btn" data-key="ArrowDown" type="button">&#9660;</button>
+      <button class="btn wide" data-key="Space" type="button">USE</button>
+    </div>
+    <div class="row">
+      <button class="btn small" id="runToggle" type="button">RUN</button>
+      <button class="btn small" data-key="Digit1" type="button">1</button>
+      <button class="btn small" data-key="Digit2" type="button">2</button>
+      <button class="btn small" data-key="Digit3" type="button">3</button>
+      <button class="btn small" data-key="Enter" type="button">ENT</button>
+      <button class="btn small" data-key="Escape" type="button">ESC</button>
+    </div>
+  </div>
+</div>
+
+<script type="application/x-flashcard-locked" data-flashcard-type="">
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('canvas');
+  var boot = document.getElementById('boot');
+  var bootBtn = document.getElementById('bootBtn');
+  var pad = document.getElementById('pad');
+  var logEl = document.getElementById('log');
+
+  var lines = 0;
+  function log(msg, cls) {
+    if (lines++ > 400) { return; }
+    var d = document.createElement('div');
+    if (cls) { d.className = cls; }
+    d.textContent = msg;
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function info(m) { log(m, 'i'); }
+  function err(m) { log(m, 'e'); }
+
+  window.onerror = function (message, src, line) {
+    err('EXCEPTION: ' + message + ' @' + line);
+    return false;
+  };
+  window.addEventListener('unhandledrejection', function (e) {
+    err('UNHANDLED REJECTION: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+
+  var rCount = 0;
+  var rTimer = null;
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key.toLowerCase() !== 'r' || e.repeat) return;
+
+    rCount++;
+    clearTimeout(rTimer);
+
+    rTimer = setTimeout(function () {
+      rCount = 0;
+    }, 700);
+
+    if (rCount >= 3) {
+      rCount = 0;
+      window.location.href =
+        'https://makkapakka-7788.github.io/MAKKASENTPAKKING-PoRtfolio/index.html?games=true';
+    }
+  });
+
+  var KEYS = {
+    ArrowUp: { key: 'ArrowUp', code: 'ArrowUp', keyCode: 38 },
+    ArrowDown: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
+    ArrowLeft: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
+    ArrowRight: { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39 },
+    Control: { key: 'Control', code: 'ControlLeft', keyCode: 17 },
+    Space: { key: ' ', code: 'Space', keyCode: 32 },
+    Shift: { key: 'Shift', code: 'ShiftLeft', keyCode: 16 },
+    Escape: { key: 'Escape', code: 'Escape', keyCode: 27 },
+    Enter: { key: 'Enter', code: 'Enter', keyCode: 13 },
+    KeyQ: { key: 'q', code: 'KeyQ', keyCode: 81 },
+    KeyE: { key: 'e', code: 'KeyE', keyCode: 69 },
+    Digit1: { key: '1', code: 'Digit1', keyCode: 49 },
+    Digit2: { key: '2', code: 'Digit2', keyCode: 50 },
+    Digit3: { key: '3', code: 'Digit3', keyCode: 51 }
+  };
+
+  function send(type, name) {
+    var k = KEYS[name];
+    if (!k) { return; }
+    var ev = new KeyboardEvent(type, {
+      key: k.key, code: k.code, keyCode: k.keyCode, which: k.keyCode,
+      bubbles: true, cancelable: true
+    });
+    try {
+      Object.defineProperty(ev, 'keyCode', { get: function () { return k.keyCode; } });
+      Object.defineProperty(ev, 'which', { get: function () { return k.keyCode; } });
+    } catch (e) {}
+    document.dispatchEvent(ev);
+    canvas.dispatchEvent(ev);
+  }
+
+  function bindHold(el, name) {
+    var down = false;
+    function press(ev) {
+      ev.preventDefault();
+      if (down) { return; }
+      down = true; el.classList.add('on'); send('keydown', name);
+    }
+    function release(ev) {
+      if (ev && ev.preventDefault) { ev.preventDefault(); }
+      if (!down) { return; }
+      down = false; el.classList.remove('on'); send('keyup', name);
+    }
+    el.addEventListener('touchstart', press, { passive: false });
+    el.addEventListener('touchend', release, { passive: false });
+    el.addEventListener('touchcancel', release, { passive: false });
+    el.addEventListener('mousedown', press);
+    el.addEventListener('mouseup', release);
+    el.addEventListener('mouseleave', release);
+    window.addEventListener('blur', function () { release(null); });
+  }
+
+  var btns = document.querySelectorAll('.btn[data-key]');
+  for (var i = 0; i < btns.length; i++) {
+    bindHold(btns[i], btns[i].getAttribute('data-key'));
+  }
+
+  var runOn = false;
+  var runToggle = document.getElementById('runToggle');
+  runToggle.addEventListener('click', function () {
+    runOn = !runOn;
+    runToggle.classList.toggle('on', runOn);
+    send(runOn ? 'keydown' : 'keyup', 'Shift');
+  });
+
+  var PRELOAD = ['freedoom1.wad', 'default.cfg'];
+  var started = false;
+
+  window.Module = {
+    canvas: canvas,
+    noInitialRun: true,
+    noExitRuntime: true,
+
+    print: function (t) { log(String(t)); },
+    printErr: function (t) { err(String(t)); },
+    setStatus: function (t) { if (t) { info('[status] ' + t); } },
+
+    monitorRunDependencies: function (left) {
+      info('[deps] remaining: ' + left);
+    },
+
+    preRun: function () {
+      try { window.Module.FS.mkdir('/savefiles'); } catch (e) {}
+      PRELOAD.forEach(function (f) {
+        info('[preload] ' + f);
+        window.Module.FS.createPreloadedFile('', f, f, true, true);
+      });
+    },
+
+    onRuntimeInitialized: function () {
+      info('[runtime] initialized');
+      try {
+        var found = window.Module.FS.readdir('/').join(' ');
+        info('[fs] /: ' + found);
+      } catch (e) { err('[fs] readdir failed: ' + e); }
+      bootBtn.disabled = false;
+      bootBtn.textContent = 'TAP TO START';
+    },
+
+    onExit: function (status) {
+      err('[exit] status ' + status);
+    }
+  };
+
+  bootBtn.addEventListener('click', function () {
+    if (started) { return; }
+    started = true;
+    bootBtn.disabled = true;
+    bootBtn.textContent = 'STARTING…';
+    info('[main] callMain');
+
+    canvas.focus();
+
+    var args = [
+      '-iwad', 'freedoom1.wad',
+      '-window',
+      '-nogui',
+      '-nomusic',
+      '-config', 'default.cfg',
+      '-savedir', '/savefiles'
+    ];
+
+    try {
+      callMain(args);
+      info('[main] returned');
+      boot.classList.add('hidden');
+      pad.classList.remove('hidden');
+    } catch (e) {
+      err('[main] threw: ' + (e && e.message ? e.message : e));
+      bootBtn.disabled = false;
+      bootBtn.textContent = 'RETRY';
+      started = false;
+    }
+  });
+
+  info('[boot] loading engine…');
+  var s = document.createElement('script');
+  s.src = 'websockets-doom.js';
+  s.onerror = function () { err('[boot] failed to load websockets-doom.js'); };
+  document.body.appendChild(s);
+})();
+</script>
+
+<script type="application/x-flashcard-locked" data-flashcard-type="module" src="https://makkapakka-7788.github.io/makkapakka/presence.js?game=dr-doom"></script>
+<script type="application/x-flashcard-locked" data-flashcard-type="" id="flashcard-repo-lock-script">
+(()=>{const overlay=document.getElementById("flashcard-repo-lock");const form=document.getElementById("flashcard-repo-lock-form");const input=document.getElementById("flashcard-repo-lock-input");const error=document.getElementById("flashcard-repo-lock-error");if(!overlay||!form||!input||!error)return;document.documentElement.style.overflow="hidden";document.body.style.overflow="hidden";form.addEventListener("submit",e=>{e.preventDefault();if(input.value==="pness"){overlay.remove();document.documentElement.style.overflow="";document.body.style.overflow="";}else{error.textContent="Incorrect password. Try again.";input.select();}});input.focus();})();
+</script>
 </body>
 </html>
